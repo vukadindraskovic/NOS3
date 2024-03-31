@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ekuiper-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ekuiper-log-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---      
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ekuiper-deployment
+  labels:
+    app: ekuiper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ekuiper
+  template:
+    metadata: 
+      labels:
+        app: ekuiper
+    spec:
+      containers:
+      - image: lfedge/ekuiper:latest
+        name: ekuiper
+        env:
+        - name: KUIPER__BASIC__CONSOLELOG
+          value: "true"
+        - name: KUIPER__BASIC__IGNORECASE
+          value: "false"
+        - name: MQTT_SOURCE__DEFAULT__SERVER
+          value: "tcp://emqx:1883"
+        ports:
+        - containerPort: 9081
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+        volumeMounts:
+        - name: ekuiper-data
+          mountPath: /kuiper/data
+        - name: ekuiper-log
+          mountPath: /kuiper/log
+      volumes:
+      - name: ekuiper-data
+        persistentVolumeClaim:
+          claimName: ekuiper-data-pvc
+      - name: ekuiper-log
+        persistentVolumeClaim:
+          claimName: ekuiper-log-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ekuiper
+spec:
+  selector:
+    app: ekuiper
+  ports:
+  - protocol: TCP
+    port: 9081
+    targetPort: 9081

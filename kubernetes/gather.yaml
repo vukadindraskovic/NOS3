@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gather-deployment
+  labels:
+    app: gather
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gather
+  template:
+    metadata:
+      labels:
+        app: gather
+    spec:
+      containers:
+      - image: nos3-gather-service
+        imagePullPolicy: Never
+        name: gather
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gather
+spec:
+  selector:
+    app: gather
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000

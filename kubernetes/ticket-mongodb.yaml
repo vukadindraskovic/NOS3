@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ticket-mongodb-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-mongodb-deployment
+  labels:
+    app: ticket-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket-mongodb
+  template:
+    metadata:
+      labels:
+        app: ticket-mongodb
+    spec:
+      containers:
+      - image: mongo:latest
+        name: ticket-mongodb
+        ports:
+        - containerPort: 27018
+        args:
+        - mongod
+        - --port
+        - "27018"
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: admin  
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: password
+        volumeMounts:
+          - name: ticket-mongodb-data
+            mountPath: /data/db
+      volumes:
+      - name: ticket-mongodb-data
+        persistentVolumeClaim:
+          claimName: ticket-mongodb-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticket-mongodb
+spec:
+  selector:
+    app: ticket-mongodb
+  ports:
+  - protocol: TCP
+    port: 27018
+    targetPort: 27018

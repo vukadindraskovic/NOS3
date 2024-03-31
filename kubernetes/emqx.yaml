@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emqx-deployment
+  labels:
+    app: emqx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emqx
+  template:
+    metadata:
+      labels:
+        app: emqx
+    spec:
+      containers:
+      - image: emqx:latest
+        name: emqx
+        livenessProbe:
+          exec:
+            command:
+              - /opt/emqx/bin/emqx_ctl
+              - status
+          failureThreshold: 5
+          periodSeconds: 5
+          timeoutSeconds: 25
+        ports:
+        - containerPort: 1883
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emqx
+spec:
+  selector:
+    app: emqx
+  ports:
+  - protocol: TCP
+    port: 1883
+    targetPort: 1883
+

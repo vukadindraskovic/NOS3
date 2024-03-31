@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-deployment
+  labels:
+    app: ticket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket
+  template:
+    metadata:
+      labels:
+        app: ticket
+    spec:
+      containers:
+      - image: nos3-ticket-service
+        imagePullPolicy: Never
+        name: ticket
+        ports:
+        - containerPort: 8001
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticket
+spec:
+  selector:
+    app: ticket
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 8001
+    targetPort: 8001
